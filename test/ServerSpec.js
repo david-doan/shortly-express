@@ -254,6 +254,8 @@ describe('', function() {
         db.knex('users')
           .where('username', '=', 'Svnh')
           .then(function(res) {
+            console.log('this is the res in test ->', res);
+            console.log('this is the body in test ->', body);
             if (res[0] && res[0]['username']) { //res [{username: 'Svnh'}]
               var user = res[0]['username'];
             }

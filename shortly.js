@@ -3,7 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 // add express session
-var session =  require('express-session');
+var session = require('express-session');
 
 
 var db = require('./app/config');
@@ -40,6 +40,7 @@ function(req, res) {
 app.get('/create', 
 function(req, res) {
   if (req.session.user) {
+    console.log('trying to access /create');
     res.render('index');
   } else {
     res.redirect('login');
@@ -92,6 +93,11 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/logout', (req, res) =>{
+  req.session.destroy();
+  res.redirect('/');
+});
+
 app.get('/login', 
 function(req, res) {
   res.render('login');
@@ -116,8 +122,7 @@ app.post('/signup', (req, res) => {
         console.log('trying to respond with username');
         req.session.user = username;
         req.session.admin = true;
-        res.location('/');
-        res.send([{username: username}]);
+        res.redirect('/');
       });
     }
   }); 
