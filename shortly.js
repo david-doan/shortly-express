@@ -2,6 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+// add express session
+var session =  require('express-session');
 
 
 var db = require('./app/config');
@@ -21,23 +23,39 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
-
+// Use session
+app.use( session ({
+  secret: 'what'
+}));
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  if (req.session.user) {
+    console.log(req.session.user, '<--- req.session.id');
+    res.render('index');
+  } else {
+    res.redirect('login');
+  }
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  if (req.session.user) {
+    res.render('index');
+  } else {
+    res.redirect('login');
+  }
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.status(200).send(links.models);
-  });
+  if (req.session.user) {
+    Links.reset().fetch().then(function(links) {
+      res.status(200).send(links.models);
+    });
+  } else {
+    res.redirect('login');
+  }
 });
 
 app.post('/links', 
@@ -75,9 +93,35 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/login', 
+function(req, res) {
+  res.render('login');
+});
 
-
-
+app.post('/login', (req, res) =>{
+  var authenticate = (req) => { 
+    var username = req.body.username;
+    var password = req.body.password;
+    return Users
+    .query('where', 'username', '=', username)
+    .query('where', 'password', '=', password)
+    .fetch()
+    .then( models => {
+      if (models.length === 1) {
+        req.session.user = username;
+        req.session.admin = true;
+        res.redirect('/');
+      } else {
+        res.redirect('login');
+      } 
+    })
+    .catch((err) => {
+      throw err;
+    });
+  };
+  
+  console.log(authenticate(req), '----------------------->');
+});
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
