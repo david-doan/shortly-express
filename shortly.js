@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 // add express session
 var session = require('express-session');
 
-
+var bcrypt = require('bcrypt-nodejs');
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
@@ -110,7 +110,6 @@ app.post('/signup', (req, res) => {
   .query('where', 'username', '=', username)
   .fetch()
   .then(model => {
-    console.log(model, '<---- this is the model');
     if (model.length === 1) {
       res.send('Username taken, please choose a new Username');
     } else {
@@ -139,13 +138,16 @@ app.post('/login', (req, res) =>{
     var password = req.body.password;
     Users
     .query('where', 'username', '=', username)
-    .query('where', 'password', '=', password)
     .fetch()
     .then( models => {
       if (models.length === 1) {
-        req.session.user = username;
-        req.session.admin = true;
-        res.redirect('/');
+        if (bcrypt.compareSync(password, models.pop().get('password'))) {
+          req.session.user = username;
+          req.session.admin = true;
+          res.redirect('/');
+        } else {
+          res.redirect('/login');
+        }
       } else {
         res.redirect('/login');
       } 

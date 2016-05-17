@@ -27,7 +27,7 @@
 // app.use( session ({
 //   secret: 'what'
 // }));
-
+var bcrypt = require('bcrypt-nodejs');
 var path = require('path');
 var knex = require('knex')({
   client: 'sqlite3',
@@ -39,19 +39,56 @@ var knex = require('knex')({
 var db = require('bookshelf')(knex);
 var Users = require('./app/collections/users.js');
 
-console.log(
-  Users
-  .query('where', 'username', '=', 'Phillip')
-  .query('where', 'password', '=', 'asdfasdfasdf')
-  .fetch()
-  .then( models =>{
-    console.log(models.length, 'is Array?');
-    console.log(models, '<-- models');
-    models.forEach( (model) =>{
-      console.log(model.get('username'), '<--- model username');
-      console.log(model.get('password'), '<--- model password');
-      console.log(model.get('id'), '<--- model id');
+// console.log(
+//   Users
+//   .query('where', 'username', '=', 'Phillip')
+//   .query('where', 'password', '=', 'asdfasdfasdf')
+//   .fetch()
+//   .then( models =>{
+//     console.log(models.length, 'is Array?');
+//     console.log(models, '<-- models');
+//     models.forEach( (model) =>{
+//       console.log(model.get('username'), '<--- model username');
+//       console.log(model.get('password'), '<--- model password');
+//       console.log(model.get('id'), '<--- model id');
+//     });
+//   })
+// );
+const myPlaintextPassword = 's0/\/\P4$$w0rD';
+const someOtherPlaintextPassword = 'not_bacon';
+
+var hashedPassword;
+
+var bhash = bcrypt.genSalt(10, function(err, result) {
+  if (err) {
+    throw err;
+  } else {
+    console.log(result, '---------------------SALT!!!');
+    bcrypt.hash(myPlaintextPassword, result, null, function(err, hash) {
+      if (err) {
+        throw err;
+      }
+      console.log(hash, '-----------------------HASH!');
+      hashedPassword = hash;
     });
-  })
-);
+  }
+});
+
+setTimeout(function() {
+  console.log(bcrypt.compareSync('dgs', hashedPassword), '^^^ RESULT OF COMPARE');
+}, 5000);
+  
+console.log(bcrypt.hashSync('plain', null), 'hashSync');
+
+
+// bcrypt.hash(myPlaintextPassword, , null, function(err, hash) {
+//   if(err) {
+//     throw err;
+//   }
+//   console.log(hash);
+// });
+
+
+
+
 
