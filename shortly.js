@@ -31,7 +31,6 @@ app.use( session ({
 app.get('/', 
 function(req, res) {
   if (req.session.user) {
-    console.log(req.session.user, '<--- req.session.id');
     res.render('index');
   } else {
     res.redirect('login');
@@ -98,11 +97,42 @@ function(req, res) {
   res.render('login');
 });
 
+app.post('/signup', (req, res) => {
+  var username = req.body.username;
+  var password = req.body.password;
+  Users
+  .query('where', 'username', '=', username)
+  .fetch()
+  .then(model => {
+    console.log(model, '<---- this is the model');
+    if (model.length === 1) {
+      res.send('Username taken, please choose a new Username');
+    } else {
+      new User({
+        'username': username,
+        'password': password
+      }).save()
+      .then(() => {
+        console.log('trying to respond with username');
+        req.session.user = username;
+        req.session.admin = true;
+        res.location('/');
+        res.send([{username: username}]);
+      });
+    }
+  }); 
+});
+
+app.get('/signup', 
+function(req, res) {
+  res.render('signup');
+});
+
 app.post('/login', (req, res) =>{
   var authenticate = (req) => { 
     var username = req.body.username;
     var password = req.body.password;
-    return Users
+    Users
     .query('where', 'username', '=', username)
     .query('where', 'password', '=', password)
     .fetch()
@@ -112,7 +142,7 @@ app.post('/login', (req, res) =>{
         req.session.admin = true;
         res.redirect('/');
       } else {
-        res.redirect('login');
+        res.redirect('/login');
       } 
     })
     .catch((err) => {
@@ -120,7 +150,7 @@ app.post('/login', (req, res) =>{
     });
   };
   
-  console.log(authenticate(req), '----------------------->');
+  authenticate(req);
 });
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
